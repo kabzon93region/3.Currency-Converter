@@ -2,28 +2,37 @@ import xml.etree.ElementTree as ET
 import datetime as dt
 import requests
 
-def get_val_code_dict(cur_dict):
-    url = 'http://www.cbr.ru/scripts/XML_val.asp'  #http://www.cbr.ru/scripts/XML_val.asp?d=0
+
+class cbrval:
+    name: str = None
+    req_code: str = None
+    iso_code: str = None
+
+    def __init__(self, name, req_code, iso_code):
+        self.name = name
+        self.req_code = req_code
+        self.iso_code = iso_code
+
+def gts():
+    glist = []
+    for i in range(50):
+        glist.append(cbrval("name-"+str(i), "req_code-"+str(i), "iso_code-"+str(i)))
+    print(glist.name)
+
+def get_val_code_dict(cur_dict: list):
+    url = 'http://www.cbr.ru/scripts/XML_valFull.asp'  #http://www.cbr.ru/scripts/XML_val.asp?d=0
     response = requests.get(url)
-
-    # Создание пустого словаря
-    currency_dict = {}
-
-    # Парсинг XML-ответа
     root = ET.fromstring(response.content)
     for item in root.iter('Item'):
-        # Извлечение данных
         name = item.find('Name').text
-        code = item.find('ParentCode').text.strip()  # Удаление пробелов из кода
-        # Добавление данных в словарь
-        currency_dict[name] = code
-    cur_dict.update(currency_dict)
+        req_code = item.find('ParentCode').text
+        iso_code = item.find('ISO_Char_Code').text
+        cur_dict.append(cbrval(name, req_code, iso_code))
 
 
-def get_cur_on_date(valcode: str):
+def get_cur_on_date(valcode: str, date_str: str):
     while True:
         try:
-            date_str = input("Введите дату в формате ДД.ММ.ГГГГ на которую вы хотите узнать курс валюты: ")
             date = dt.datetime.strptime(date_str, "%d.%m.%Y")
             date_str = date.strftime("%d/%m/%Y")
             date = dt.datetime.strptime(date_str, "%d/%m/%Y")
@@ -32,6 +41,7 @@ def get_cur_on_date(valcode: str):
             break
         except ValueError:
             print("!ОШИБКА! : Вы ввели не дату или не в формате ДД.ММ.ГГГГ.")
+            date_str = input("Введите дату в формате ДД.ММ.ГГГГ на которую вы хотите узнать курс валюты: ")
 
     while True:
         try:
